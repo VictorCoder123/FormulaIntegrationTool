@@ -10,6 +10,7 @@ using Microsoft.Formula.Compiler;
 using Microsoft.Formula.API.ASTQueries;
 using Microsoft.Formula.API.Nodes;
 using Microsoft.Formula.Common.Rules;
+using Microsoft.Formula.Common;
 
 
 namespace ConstraintExecutor
@@ -77,7 +78,7 @@ namespace ConstraintExecutor
             }
         }
 
-        public int DoConstraintQuery(string constraint, ProgramName progName)
+        public async Task<LiftedBool> DoConstraintQuery(string constraint, ProgramName progName)
         {
             AST<Body>[] goals;
             int id = -1;
@@ -86,7 +87,7 @@ namespace ConstraintExecutor
             if (cmdParts.Length != 2)
             {
                 Console.WriteLine("Invalid constraint, must contain two parts.");
-                return id;
+                return LiftedBool.Unknown;
             }
 
             var name = cmdParts[0];
@@ -112,20 +113,22 @@ namespace ConstraintExecutor
             if (!result)
             {
                 Console.WriteLine("Could not start operation; environment is busy");
-                return id;
+                return LiftedBool.Unknown;
             }
 
             if (task != null)
             {
                 id = taskManager.StartTask(task, stats, queryCancel);
                 Console.WriteLine(string.Format("Started query task with Id {0}.", id));
+                task.Wait();
+                return task.Result.Conclusion;
             }
             else
             {
                 Console.WriteLine("Failed to generate query task.");
+                return LiftedBool.Unknown;
             }
 
-            return id;
         }
 
     }

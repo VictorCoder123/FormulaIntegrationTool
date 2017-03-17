@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Formula.Common;
 using Microsoft.Formula.API;
 using Newtonsoft.Json;
 
@@ -83,12 +84,20 @@ namespace ConstraintExecutor
 
 
             ParseJSON(jsonFile, out constraints);
+
+            List<Task<LiftedBool>> tasks = new List<Task<LiftedBool>>();
             foreach (string constraint in constraints)
             {
                 TaskManager.TaskData taskdata;
-                int id = executor.DoConstraintQuery(query1, progName);
-                executor.taskManager.TryGetTaskdata(id, out taskdata);
-                Console.WriteLine(taskdata.ResultSummary);
+                Task<LiftedBool> task = executor.DoConstraintQuery(query1, progName);
+                tasks.Add(task);
+            }
+
+            Task.WaitAll(tasks.ToArray());
+
+            foreach (Task<LiftedBool> result in tasks)
+            {
+                Console.WriteLine(result.Result);
             }
 
             Console.ReadLine();
