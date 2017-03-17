@@ -19,7 +19,7 @@ namespace ConstraintExecutor
         private static readonly char[] cmdSplitChars = new char[] { ' ' };
         private Dictionary<ProgramName, Program> programs = new Dictionary<ProgramName, Program>();
         private Env env = new Env();
-        private TaskManager taskManager = new TaskManager();
+        public TaskManager taskManager = new TaskManager();
 
         public CommandExecutor(string filename)
         {
@@ -31,28 +31,13 @@ namespace ConstraintExecutor
 
         public void DoLoad(string filename)
         {
-            ProgramName progName;
-            try
+            if (string.IsNullOrWhiteSpace(filename))
             {
-                progName = new ProgramName(filename);
-                if (programs.ContainsKey(progName))
-                {
-                    Console.WriteLine("Program alreay exists!");
-                    return;
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Invalid program name scheme; must be file or env.");
+                Console.WriteLine("Cannot load empty filename.");
                 return;
             }
-
-            // Must wait until file parsing is finished before any query.
-            var task = Factory.Instance.ParseFile(progName);
-            task.Wait();
-           
-            // Load Program into dictionary.
-            programs.Add(progName, task.Result.Program.Node);
+            InstallResult result;
+            env.Install(filename, out result);
         }
 
         public void ParseConstraint(string[] cmdParts, out AST<Body>[] goals)
@@ -92,15 +77,16 @@ namespace ConstraintExecutor
             }
         }
 
-        public void DoConstraintQuery(string constraint, ProgramName progName)
+        public int DoConstraintQuery(string constraint, ProgramName progName)
         {
             AST<Body>[] goals;
+            int id = -1;
 
             var cmdParts = constraint.Split(cmdSplitChars, 2, StringSplitOptions.RemoveEmptyEntries);
             if (cmdParts.Length != 2)
             {
                 Console.WriteLine("Invalid constraint, must contain two parts.");
-                return;
+                return id;
             }
 
             var name = cmdParts[0];
@@ -126,14 +112,20 @@ namespace ConstraintExecutor
             if (!result)
             {
                 Console.WriteLine("Could not start operation; environment is busy");
-                return;
+                return id;
             }
 
             if (task != null)
             {
-                var id = taskManager.StartTask(task, stats, queryCancel);
+                id = taskManager.StartTask(task, stats, queryCancel);
                 Console.WriteLine(string.Format("Started query task with Id {0}.", id));
             }
+            else
+            {
+                Console.WriteLine("Failed to generate query task.");
+            }
+
+            return id;
         }
 
     }

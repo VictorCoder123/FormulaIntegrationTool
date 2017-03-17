@@ -60,6 +60,18 @@ namespace ConstraintExecutor
             return true;
         }
 
+        public bool TryGetTaskdata(int id, out TaskData taskdata)
+        {
+            TaskData data;
+            if (!tasks.TryGetValue(id, out data))
+            {
+                taskdata = null;
+                return false;
+            }
+            taskdata = data;
+            return true;
+        }
+
         public bool TryGetStatistics(int id, out ExecuterStatistics stats)
         {
             TaskData data;
@@ -105,7 +117,7 @@ namespace ConstraintExecutor
         }
 
 
-        private class TaskData
+        public class TaskData
         {
             public DateTime StartTime { get; private set;}
             public TaskKind Kind { get; private set;}
