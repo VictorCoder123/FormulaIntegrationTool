@@ -81,14 +81,17 @@ namespace ConstraintExecutor
             var progName = new ProgramName(formulaFile);
             Console.WriteLine("Start loading Formula file from {0}", formulaFileInfo.FullName);
             executor = new CommandExecutor(formulaFile);
+            executor.DoLoad();
+            executor.DoSearchConstraints();
 
 
-            ParseJSON(jsonFile, out constraints);
+            // ParseJSON(jsonFile, out constraints);
+            constraints = executor.constraintList;
 
             List<Task<LiftedBool>> tasks = new List<Task<LiftedBool>>();
             foreach (string constraint in constraints)
             {
-                TaskManager.TaskData taskdata;
+                // TaskManager.TaskData taskdata;
                 Task<LiftedBool> task = executor.DoConstraintQuery(query1, progName);
                 tasks.Add(task);
             }

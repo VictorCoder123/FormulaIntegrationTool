@@ -18,27 +18,48 @@ namespace ConstraintExecutor
     class CommandExecutor
     {
         private static readonly char[] cmdSplitChars = new char[] { ' ' };
-        private Dictionary<ProgramName, Program> programs = new Dictionary<ProgramName, Program>();
+        private string formulaFilename;
+        private AST<Program> program;
         private Env env = new Env();
         public TaskManager taskManager = new TaskManager();
 
         public CommandExecutor(string filename)
         {
-            // Load Formula file and create AST tree, wait until loading is finished.
-            DoLoad(filename);
-            // Run task asynchronously.
+            formulaFilename = filename;
+            // Set flag to run task asynchronously.
             taskManager.IsWaitOn = false;
         }
 
-        public void DoLoad(string filename)
+        public List<string> constraintList
         {
-            if (string.IsNullOrWhiteSpace(filename))
+            get;
+            private set;
+        }
+
+        public void DoLoad()
+        {
+            if (string.IsNullOrWhiteSpace(formulaFilename))
             {
                 Console.WriteLine("Cannot load empty filename.");
                 return;
             }
+            // Get AST tree from parsing result and store its reference.
+            ProgramName progName = new ProgramName(formulaFilename);
+            Task<ParseResult> task = Factory.Instance.ParseFile(progName);
+            task.Wait();
+            if (!task.Result.Succeeded)
+            {
+                Console.WriteLine("Failed to parse the Formula file.");
+                return;
+            }
+            program = task.Result.Program;
+
+            // Install program into current env.
             InstallResult result;
-            env.Install(filename, out result);
+            env.Install(program, out result);
+
+            // Import constraints from loaded program.
+            constraintList = DoSearchConstraints();
         }
 
         public void ParseConstraint(string[] cmdParts, out AST<Body>[] goals)
@@ -76,6 +97,43 @@ namespace ConstraintExecutor
             {
                 goals[i++] = (AST<Body>)Factory.Instance.ToAST(b);
             }
+        }
+
+        // Return a list of synthesized Query string.
+        public List<string> DoSearchConstraints()
+        {
+            List<string> constraintList = new List<string>();
+            string modelName = "M";
+            if (program == null)
+            {
+                Console.WriteLine("Failed to read parsed program.");
+            }
+
+            IEnumerable<Node> domains = program.Root.Children.Where(x => {
+                return x.NodeKind == NodeKind.Domain;
+            });
+
+            Node constraintDomain = domains.First(x => {
+                Domain domain = (Domain)x;
+                return domain.Name == "Constraints";
+            });
+
+            IEnumerable<Node> rules = constraintDomain.Children.Where(x => {
+                return x.NodeKind == NodeKind.Rule;
+            });
+
+            IEnumerable<Node> constraintRules = rules.Where(x => {
+                Rule rule = (Rule)x;
+                return rule.Heads.First().NodeKind == NodeKind.Id;
+            });
+
+            foreach (Rule rule in constraintRules)
+            {
+                Id id = (Id)rule.Heads.First();
+                constraintList.Add(modelName + " " + id.Name);
+            }
+
+            return constraintList;
         }
 
         public async Task<LiftedBool> DoConstraintQuery(string constraint, ProgramName progName)
