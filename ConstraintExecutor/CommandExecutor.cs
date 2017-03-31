@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Text;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Formula.API;
@@ -18,50 +18,28 @@ namespace ConstraintExecutor
     class CommandExecutor
     {
         private static readonly char[] cmdSplitChars = new char[] { ' ' };
+
         private string formulaFilename;
+        private ProgramName progName;
         private AST<Program> program;
+
+        // A list of string parsed from AST tree as constraints.
+        public List<string> constraintList { get; private set; }
+
+        private Stopwatch stopwatch = new Stopwatch();
         private Env env = new Env();
         public TaskManager taskManager = new TaskManager();
 
         public CommandExecutor(string filename)
         {
             formulaFilename = filename;
+            progName = new ProgramName(formulaFilename);
+
             // Set flag to run task asynchronously.
             taskManager.IsWaitOn = false;
         }
 
-        public List<string> constraintList
-        {
-            get;
-            private set;
-        }
-
-        public void DoLoad()
-        {
-            if (string.IsNullOrWhiteSpace(formulaFilename))
-            {
-                Console.WriteLine("Cannot load empty filename.");
-                return;
-            }
-            // Get AST tree from parsing result and store its reference.
-            ProgramName progName = new ProgramName(formulaFilename);
-            Task<ParseResult> task = Factory.Instance.ParseFile(progName);
-            task.Wait();
-            if (!task.Result.Succeeded)
-            {
-                Console.WriteLine("Failed to parse the Formula file.");
-                return;
-            }
-            program = task.Result.Program;
-
-            // Install program into current env.
-            InstallResult result;
-            env.Install(program, out result);
-
-            // Import constraints from loaded program.
-            constraintList = DoSearchConstraints();
-        }
-
+        // Parse query string and get a list of goals in AST format.
         public void ParseConstraint(string[] cmdParts, out AST<Body>[] goals)
         {
             goals = null;
@@ -97,6 +75,43 @@ namespace ConstraintExecutor
             {
                 goals[i++] = (AST<Body>)Factory.Instance.ToAST(b);
             }
+        }
+
+        // Load Formula file, create AST tree and extract all constraints.
+        public void DoLoad()
+        {
+            if (string.IsNullOrWhiteSpace(formulaFilename))
+            {
+                Console.WriteLine("Cannot load empty filename.");
+                return;
+            }
+
+            stopwatch.Start();
+
+            // Get AST tree from parsing result and store its reference.
+            ProgramName progName = new ProgramName(formulaFilename);
+            Task<ParseResult> task = Factory.Instance.ParseFile(progName);
+            task.Wait();
+
+            stopwatch.Stop();
+            Console.WriteLine("Time for parsing Formula file is {0} seconds.", stopwatch.Elapsed);
+
+            if (!task.Result.Succeeded)
+            {
+                Console.WriteLine("Failed to parse the Formula file.");
+                return;
+            }
+            program = task.Result.Program;
+
+            stopwatch.Start();
+            // Install program into current env.
+            InstallResult result;
+            env.Install(program, out result);
+            stopwatch.Stop();
+            Console.WriteLine("Time for installing program is {0} seconds", stopwatch.Elapsed);
+
+            // Import constraints from loaded program.
+            constraintList = DoSearchConstraints();
         }
 
         // Return a list of synthesized Query string.
@@ -136,7 +151,8 @@ namespace ConstraintExecutor
             return constraintList;
         }
 
-        public async Task<LiftedBool> DoConstraintQuery(string constraint, ProgramName progName)
+        // Execute a single query and get result asynchronously.
+        public async Task<LiftedBool> DoConstraintQuery(string constraint)
         {
             AST<Body>[] goals;
             int id = -1;
@@ -153,7 +169,7 @@ namespace ConstraintExecutor
             ParseConstraint(cmdParts, out goals);
 
             List<Flag> flags;
-            System.Threading.Tasks.Task<QueryResult> task;
+            Task<QueryResult> task;
             ExecuterStatistics stats;
             var queryCancel = new CancellationTokenSource();
 
@@ -176,6 +192,7 @@ namespace ConstraintExecutor
 
             if (task != null)
             {
+                // Make it synchronous here, but set the whole functio to be asynchronous.
                 id = taskManager.StartTask(task, stats, queryCancel);
                 Console.WriteLine(string.Format("Started query task with Id {0}.", id));
                 task.Wait();
@@ -186,6 +203,11 @@ namespace ConstraintExecutor
                 Console.WriteLine("Failed to generate query task.");
                 return LiftedBool.Unknown;
             }
+
+        }
+
+        public void DoSubstitute()
+        {
 
         }
 

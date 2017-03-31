@@ -2,7 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Formula.Common;
 using Microsoft.Formula.API;
@@ -48,13 +48,12 @@ namespace ConstraintExecutor
         {
             string query1 = "M constraint1";
                
-
             CommandExecutor executor;
             string formulaFile;
             string jsonFile;
             FileInfo formulaFileInfo;
             FileInfo jsonFileInfo;
-            List<string> constraints;
+            Stopwatch stopwatch = new Stopwatch();
 
             // Read in formula and JSON filename from either command line args or user input.
             if (args.Length != 0)
@@ -78,25 +77,29 @@ namespace ConstraintExecutor
             }
 
             // Create executor with Formula file loaded.
-            var progName = new ProgramName(formulaFile);
             Console.WriteLine("Start loading Formula file from {0}", formulaFileInfo.FullName);
+
+            stopwatch.Start();
+
             executor = new CommandExecutor(formulaFile);
             executor.DoLoad();
-            executor.DoSearchConstraints();
 
+            stopwatch.Stop();
+            Console.WriteLine("Total loading time of Formula file is {0} seconds", stopwatch.Elapsed.ToString());
 
-            // ParseJSON(jsonFile, out constraints);
-            constraints = executor.constraintList;
-
+            stopwatch.Start();
             List<Task<LiftedBool>> tasks = new List<Task<LiftedBool>>();
-            foreach (string constraint in constraints)
+            foreach (string constraint in executor.constraintList)
             {
                 // TaskManager.TaskData taskdata;
-                Task<LiftedBool> task = executor.DoConstraintQuery(query1, progName);
+                Task<LiftedBool> task = executor.DoConstraintQuery(query1);
                 tasks.Add(task);
             }
 
             Task.WaitAll(tasks.ToArray());
+
+            stopwatch.Stop();
+            Console.WriteLine("Time for executing all queries in Constraints domain is {0} seconds", stopwatch.Elapsed.ToString());
 
             foreach (Task<LiftedBool> result in tasks)
             {
