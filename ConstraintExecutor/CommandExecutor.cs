@@ -36,15 +36,21 @@ namespace ConstraintExecutor
             private set;
         }
 
-        public void DoLoad()
+        public void DoLoadDomain()
         {
-            if (string.IsNullOrWhiteSpace(formulaFilename))
+            DoLoadFile(formulaFilename);
+        }
+
+        public void DoLoadFile(string filename)
+        {
+            if (string.IsNullOrWhiteSpace(filename))
             {
                 Console.WriteLine("Cannot load empty filename.");
                 return;
             }
             // Get AST tree from parsing result and store its reference.
-            ProgramName progName = new ProgramName(formulaFilename);
+            /*
+            ProgramName progName = new ProgramName(filename);
             Task<ParseResult> task = Factory.Instance.ParseFile(progName);
             task.Wait();
             if (!task.Result.Succeeded)
@@ -53,13 +59,14 @@ namespace ConstraintExecutor
                 return;
             }
             program = task.Result.Program;
+            */
 
             // Install program into current env.
             InstallResult result;
-            env.Install(program, out result);
+            env.Install(filename, out result);
 
             // Import constraints from loaded program.
-            constraintList = DoSearchConstraints();
+            // constraintList = DoSearchConstraints();
         }
 
         public void ParseConstraint(string[] cmdParts, out AST<Body>[] goals)

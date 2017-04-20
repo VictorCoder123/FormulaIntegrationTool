@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,15 +47,13 @@ namespace ConstraintExecutor
 
         static void Main(string[] args)
         {
-            string query1 = "M constraint1";
-               
-
             CommandExecutor executor;
             string formulaFile;
             string jsonFile;
             FileInfo formulaFileInfo;
             FileInfo jsonFileInfo;
-            List<string> constraints;
+            ProgramName progName;
+            // List<string> constraints;
 
             // Read in formula and JSON filename from either command line args or user input.
             if (args.Length != 0)
@@ -78,23 +77,47 @@ namespace ConstraintExecutor
             }
 
             // Create executor with Formula file loaded.
-            var progName = new ProgramName(formulaFile);
             Console.WriteLine("Start loading Formula file from {0}", formulaFileInfo.FullName);
             executor = new CommandExecutor(formulaFile);
-            executor.DoLoad();
-            executor.DoSearchConstraints();
 
+            Stopwatch stopwatch = new Stopwatch();
+
+            stopwatch.Restart();
+            progName = new ProgramName(formulaFile);
+            executor.DoLoadDomain();
+            stopwatch.Stop();
+            Console.WriteLine("Time for loading domain is {0}", stopwatch.Elapsed);
+
+            stopwatch.Restart();
+            var modelFile1 = "graph_model_1.4ml";
+            executor.DoLoadFile(modelFile1);
+            progName = new ProgramName(modelFile1);
+            stopwatch.Stop();
+            Console.WriteLine("Time for loading model is {0}", stopwatch.Elapsed);
+
+            stopwatch.Restart();
+            var modelFile2 = "graph_model_2.4ml";
+            executor.DoLoadFile(modelFile2);
+            progName = new ProgramName(modelFile2);
+            stopwatch.Stop();
+            Console.WriteLine("Time for loading model is {0}", stopwatch.Elapsed);
+
+            // executor.DoSearchConstraints();
 
             // ParseJSON(jsonFile, out constraints);
-            constraints = executor.constraintList;
+            // constraints = executor.constraintList;
 
             List<Task<LiftedBool>> tasks = new List<Task<LiftedBool>>();
-            foreach (string constraint in constraints)
+            /**foreach (string constraint in constraints)
             {
                 // TaskManager.TaskData taskdata;
                 Task<LiftedBool> task = executor.DoConstraintQuery(query1, progName);
                 tasks.Add(task);
-            }
+            }**/
+
+            string query = "M2 constraint1";
+            Task<LiftedBool> task = executor.DoConstraintQuery(query, progName);
+            tasks.Add(task);
 
             Task.WaitAll(tasks.ToArray());
 
