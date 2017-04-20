@@ -1,0 +1,187 @@
+model M2 of Constraints 
+[
+	modules.Constraints = "Constraints at graph_domain.4ml"
+]
+{
+
+
+attr__1 is Attr__FCO( "FCO" ).
+// pointer formula node
+ptr__1 is Ptr__FCO( NULL ).
+node__1 is FCO("/1" , NULL , attr__1, ptr__1).
+
+attr__6 is Attr__Graphs( "GeneralExamples" ).
+// pointer formula node
+ptr__6 is Ptr__Graphs( node__y_j ).
+node__6 is Graphs("/6" , NULL , attr__6, ptr__6).
+
+attr__y is Attr__language( "language" ).
+// pointer formula node
+ptr__y is Ptr__language( node__1 ).
+node__y is language("/y" , NULL , attr__y, ptr__y).
+
+attr__6_U is Attr__Graph( "Circle" ).
+// pointer formula node
+ptr__6_U is Ptr__Graph( node__y_5 ).
+node__6_U is Graph("/6/U" , node__6 , attr__6_U, ptr__6_U).
+
+attr__6_f is Attr__Graph( "Tree" ).
+// pointer formula node
+ptr__6_f is Ptr__Graph( node__y_5 ).
+node__6_f is Graph("/6/f" , node__6 , attr__6_f, ptr__6_f).
+
+attr__y_5 is Attr__Graph( "Graph" ).
+// pointer formula node
+ptr__y_5 is Ptr__Graph( node__1 ).
+node__y_5 is Graph("/y/5" , node__y , attr__y_5, ptr__y_5).
+
+attr__6_A is Attr__Graph( "Disjoint" ).
+// pointer formula node
+ptr__6_A is Ptr__Graph( node__y_5 ).
+node__6_A is Graph("/6/A" , node__6 , attr__6_A, ptr__6_A).
+
+attr__y_t is Attr__Edge( "Edge" ).
+// pointer formula node
+ptr__y_t is Ptr__Edge( node__1, NULL, NULL ).
+node__y_t is Edge("/y/t" , node__y , attr__y_t, ptr__y_t).
+
+attr__6_b is Attr__Graph( "SelfCircle" ).
+// pointer formula node
+ptr__6_b is Ptr__Graph( node__y_5 ).
+node__6_b is Graph("/6/b" , node__6 , attr__6_b, ptr__6_b).
+
+attr__y_j is Attr__Graphs( "Graphs" ).
+// pointer formula node
+ptr__y_j is Ptr__Graphs( node__1 ).
+node__y_j is Graphs("/y/j" , node__y , attr__y_j, ptr__y_j).
+
+attr__y_Y is Attr__Vertex( "Vertex" ).
+// pointer formula node
+ptr__y_Y is Ptr__Vertex( node__1 ).
+node__y_Y is Vertex("/y/Y" , node__y , attr__y_Y, ptr__y_Y).
+
+attr__6_U_y is Attr__Vertex( "v3" ).
+// pointer formula node
+ptr__6_U_y is Ptr__Vertex( node__y_Y ).
+node__6_U_y is Vertex("/6/U/y" , node__6_U , attr__6_U_y, ptr__6_U_y).
+
+attr__6_U_h is Attr__Edge( "e1-2" ).
+// pointer formula node
+ptr__6_U_h is Ptr__Edge( node__y_t, node__6_U_g, node__6_U_H ).
+node__6_U_h is Edge("/6/U/h" , node__6_U , attr__6_U_h, ptr__6_U_h).
+
+attr__6_U_i is Attr__Edge( "e3-1" ).
+// pointer formula node
+ptr__6_U_i is Ptr__Edge( node__y_t, node__6_U_H, node__6_U_y ).
+node__6_U_i is Edge("/6/U/i" , node__6_U , attr__6_U_i, ptr__6_U_i).
+
+attr__6_U_z is Attr__Edge( "e2-3" ).
+// pointer formula node
+ptr__6_U_z is Ptr__Edge( node__y_t, node__6_U_y, node__6_U_g ).
+node__6_U_z is Edge("/6/U/z" , node__6_U , attr__6_U_z, ptr__6_U_z).
+
+attr__6_U_H is Attr__Vertex( "v1" ).
+// pointer formula node
+ptr__6_U_H is Ptr__Vertex( node__y_Y ).
+node__6_U_H is Vertex("/6/U/H" , node__6_U , attr__6_U_H, ptr__6_U_H).
+
+attr__6_U_g is Attr__Vertex( "v2" ).
+// pointer formula node
+ptr__6_U_g is Ptr__Vertex( node__y_Y ).
+node__6_U_g is Vertex("/6/U/g" , node__6_U , attr__6_U_g, ptr__6_U_g).
+
+attr__6_f_5 is Attr__Vertex( "v7" ).
+// pointer formula node
+ptr__6_f_5 is Ptr__Vertex( node__y_Y ).
+node__6_f_5 is Vertex("/6/f/5" , node__6_f , attr__6_f_5, ptr__6_f_5).
+
+attr__6_f_9 is Attr__Edge( "e2-6" ).
+// pointer formula node
+ptr__6_f_9 is Ptr__Edge( node__y_t, node__6_f_B, node__6_f_b ).
+node__6_f_9 is Edge("/6/f/9" , node__6_f , attr__6_f_9, ptr__6_f_9).
+
+attr__6_f_F is Attr__Edge( "e2-5" ).
+// pointer formula node
+ptr__6_f_F is Ptr__Edge( node__y_t, node__6_f_z, node__6_f_b ).
+node__6_f_F is Edge("/6/f/F" , node__6_f , attr__6_f_F, ptr__6_f_F).
+
+attr__6_f_p is Attr__Edge( "e1-3" ).
+// pointer formula node
+ptr__6_f_p is Ptr__Edge( node__y_t, node__6_f_T, node__6_f_y ).
+node__6_f_p is Edge("/6/f/p" , node__6_f , attr__6_f_p, ptr__6_f_p).
+
+attr__6_f_G is Attr__Edge( "e1-4" ).
+// pointer formula node
+ptr__6_f_G is Ptr__Edge( node__y_t, node__6_f_S, node__6_f_y ).
+node__6_f_G is Edge("/6/f/G" , node__6_f , attr__6_f_G, ptr__6_f_G).
+
+attr__6_f_b is Attr__Vertex( "v2" ).
+// pointer formula node
+ptr__6_f_b is Ptr__Vertex( node__y_Y ).
+node__6_f_b is Vertex("/6/f/b" , node__6_f , attr__6_f_b, ptr__6_f_b).
+
+attr__6_f_q is Attr__Edge( "e4-7" ).
+// pointer formula node
+ptr__6_f_q is Ptr__Edge( node__y_t, node__6_f_5, node__6_f_S ).
+node__6_f_q is Edge("/6/f/q" , node__6_f , attr__6_f_q, ptr__6_f_q).
+
+attr__6_A_i is Attr__Vertex( "v2" ).
+// pointer formula node
+ptr__6_A_i is Ptr__Vertex( node__y_Y ).
+node__6_A_i is Vertex("/6/A/i" , node__6_A , attr__6_A_i, ptr__6_A_i).
+
+attr__6_f_z is Attr__Vertex( "v5" ).
+// pointer formula node
+ptr__6_f_z is Ptr__Vertex( node__y_Y ).
+node__6_f_z is Vertex("/6/f/z" , node__6_f , attr__6_f_z, ptr__6_f_z).
+
+attr__6_f_y is Attr__Vertex( "v1" ).
+// pointer formula node
+ptr__6_f_y is Ptr__Vertex( node__y_Y ).
+node__6_f_y is Vertex("/6/f/y" , node__6_f , attr__6_f_y, ptr__6_f_y).
+
+attr__6_A_J is Attr__Vertex( "v1" ).
+// pointer formula node
+ptr__6_A_J is Ptr__Vertex( node__y_Y ).
+node__6_A_J is Vertex("/6/A/J" , node__6_A , attr__6_A_J, ptr__6_A_J).
+
+attr__6_f_B is Attr__Vertex( "v6" ).
+// pointer formula node
+ptr__6_f_B is Ptr__Vertex( node__y_Y ).
+node__6_f_B is Vertex("/6/f/B" , node__6_f , attr__6_f_B, ptr__6_f_B).
+
+attr__6_b_r is Attr__Edge( "e1-1" ).
+// pointer formula node
+ptr__6_b_r is Ptr__Edge( node__y_t, node__6_b_e, node__6_b_e ).
+node__6_b_r is Edge("/6/b/r" , node__6_b , attr__6_b_r, ptr__6_b_r).
+
+attr__6_f_T is Attr__Vertex( "v3" ).
+// pointer formula node
+ptr__6_f_T is Ptr__Vertex( node__y_Y ).
+node__6_f_T is Vertex("/6/f/T" , node__6_f , attr__6_f_T, ptr__6_f_T).
+
+attr__6_f_S is Attr__Vertex( "v4" ).
+// pointer formula node
+ptr__6_f_S is Ptr__Vertex( node__y_Y ).
+node__6_f_S is Vertex("/6/f/S" , node__6_f , attr__6_f_S, ptr__6_f_S).
+
+attr__6_f_R is Attr__Edge( "e1-2" ).
+// pointer formula node
+ptr__6_f_R is Ptr__Edge( node__y_t, node__6_f_b, node__6_f_y ).
+node__6_f_R is Edge("/6/f/R" , node__6_f , attr__6_f_R, ptr__6_f_R).
+
+attr__6_b_e is Attr__Vertex( "v1" ).
+// pointer formula node
+ptr__6_b_e is Ptr__Vertex( node__y_Y ).
+node__6_b_e is Vertex("/6/b/e" , node__6_b , attr__6_b_e, ptr__6_b_e).
+
+attr__6_A_l is Attr__Vertex( "v3" ).
+// pointer formula node
+ptr__6_A_l is Ptr__Vertex( node__y_Y ).
+node__6_A_l is Vertex("/6/A/l" , node__6_A , attr__6_A_l, ptr__6_A_l).
+
+attr__6_A_r is Attr__Edge( "e1-2" ).
+// pointer formula node
+ptr__6_A_r is Ptr__Edge( node__y_t, node__6_A_i, node__6_A_J ).
+node__6_A_r is Edge("/6/A/r" , node__6_A , attr__6_A_r, ptr__6_A_r).
+}

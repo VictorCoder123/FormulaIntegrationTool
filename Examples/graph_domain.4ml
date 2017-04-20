@@ -1,0 +1,153 @@
+domain Language {
+
+// FCO
+FCO ::= new (
+id: String,
+parent: any languageTYPE + {NULL},
+attributes: any Attr__FCO,
+pointers: any Ptr__FCO
+).
+Attr__FCO ::= new (
+  name: String
+).
+Ptr__FCO ::= new (
+  base: any FCOTYPE + {NULL}
+).
+FCOTYPE ::= FCO + language + Graph + Vertex + Graphs + Edge.
+// FCO - end
+
+// language
+language ::= new (
+id: String,
+parent: any languageTYPE + {NULL},
+attributes: any Attr__language,
+pointers: any Ptr__language
+).
+Attr__language ::= new (
+  name: String
+).
+Ptr__language ::= new (
+  base: any FCOTYPE + {NULL}
+).
+languageTYPE ::= language.
+// language - end
+
+// Graph
+Graph ::= new (
+id: String,
+parent: any languageTYPE + GraphsTYPE + {NULL},
+attributes: any Attr__Graph,
+pointers: any Ptr__Graph
+).
+Attr__Graph ::= new (
+  name: String
+).
+Ptr__Graph ::= new (
+  base: any FCOTYPE + {NULL}
+).
+GraphTYPE ::= Graph.
+// Graph - end
+
+// Vertex
+Vertex ::= new (
+id: String,
+parent: any languageTYPE + GraphTYPE + {NULL},
+attributes: any Attr__Vertex,
+pointers: any Ptr__Vertex
+).
+Attr__Vertex ::= new (
+  name: String
+).
+Ptr__Vertex ::= new (
+  base: any FCOTYPE + {NULL}
+).
+VertexTYPE ::= Vertex.
+// Vertex - end
+
+// Graphs
+Graphs ::= new (
+id: String,
+parent: any languageTYPE + {NULL},
+attributes: any Attr__Graphs,
+pointers: any Ptr__Graphs
+).
+Attr__Graphs ::= new (
+  name: String
+).
+Ptr__Graphs ::= new (
+  base: any FCOTYPE + {NULL}
+).
+GraphsTYPE ::= Graphs.
+// Graphs - end
+
+// Edge
+Edge ::= new (
+id: String,
+parent: any languageTYPE + GraphTYPE + {NULL},
+attributes: any Attr__Edge,
+pointers: any Ptr__Edge
+).
+Attr__Edge ::= new (
+  name: String
+).
+Ptr__Edge ::= new (
+  base: any FCOTYPE + {NULL},
+  dst: any VertexTYPE + {NULL},
+  src: any VertexTYPE + {NULL}
+).
+EdgeTYPE ::= Edge.
+// Edge - end
+
+// The representation of all nodes: GMENode
+GMENode ::= FCO + language + Graph + Vertex + Graphs + Edge.
+
+// The representation of the containment relation: GMEContainment
+GMEContainment ::= (child: GMENode, parent:GMENode + {NULL}).
+GMEContainment(child, parent) :- child is GMENode, parent = child.parent ;
+GMEContainment(child, x), GMEContainment(x, parent).
+
+// The representation of the inheritance relation: GMEInheritance
+GMEInheritance ::= (node: GMENode, base: GMENode + {NULL}).
+GMEInheritance(node, base) :- node is GMENode, base = node.pointers.base ;
+GMEInheritance(node, x), GMEInheritance(x, base).
+}
+
+
+domain Constraints extends Language {
+reachable ::= new(x: Vertex, y:Vertex).
+reachable(x,y) :- x is Vertex, 
+y is Vertex, x.parent = y.parent, e is Edge, e.parent = x.parent, e.pointers.src = x, e.pointers.dst = y.
+reachable(x,y) :- reachable(x,z), reachable(z,y), x != y.
+reachable(x,y) :- reachable(y,x).
+
+unreachable ::= new(x: Vertex, y: Vertex).
+unreachable(x,y) :- x is Vertex, y is Vertex, no reachable(x,y).
+
+disjoint ::= new(g: Graph).
+disjoint(g) :- g is Graph, v1 is Vertex, v2 is Vertex, v1 != v2, v1.parent = g, v2.parent = g, unreachable(v1,v2).
+
+connected ::= new(g: Graph).
+connected(g) :- g is Graph, no disjoint(g).
+
+incycle ::= new (v: Vertex).
+incycle(v) :- v is Vertex, reachable(v,v).
+
+hascycle ::= new (g: Graph).
+hascycle(g) :- g is Graph, v3 is Vertex, v3.parent = g, incycle(v3).
+
+acyclic ::= new (g: Graph).
+acyclic(g) :- g is Graph, no hascycle(g).
+
+constraint1 :- node_v1 is Vertex, node_v1.id = "/6/A/J", 
+node_v3 is Vertex, node_v3.id = "/6/A/l", unreachable(node_v1,node_v3).
+
+constraint2 :- node_Disjoint is Graph, node_Disjoint.id = "/6/A", disjoint(node_Disjoint).
+
+constraint3 :- node_Circle is Graph, node_Circle.id = "/6/U", connected(node_Cirle).
+
+constraint4 :- node_Tree is Graph, node_Tree.id = "/6/f", connected(node_Tree).
+
+constraint5 :- node_Tree is Graph, node_Tree.id = "/6/f", acyclic(node_Tree).
+
+constraints6 :- node_SelfCircle is Graph, node_SelfCircle.id = "/6/b", hascycle(node_SelfCircle).
+}
