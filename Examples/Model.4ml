@@ -1,4 +1,4 @@
-model M of Constraints at "graph_domain.4ml"
+model M of Constraints at "Constraints.4ml"
 {
 attr__1 is Attr__FCO( "FCO" ).
 // pointer formula node

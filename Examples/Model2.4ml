@@ -1,6 +1,6 @@
 model M2 of Constraints 
 [
-	modules.Constraints = "Constraints at graph_domain.4ml"
+	modules.Constraints = "Constraints at Constraints.4ml"
 ]
 {
 
