@@ -53,18 +53,14 @@ namespace ConstraintExecutor
             FileInfo formulaFileInfo;
             FileInfo jsonFileInfo;
             ProgramName progName;
-            // List<string> constraints;
 
             // Read in formula and JSON filename from either command line args or user input.
             if (args.Length != 0)
             {
                 formulaFile = args[0];
                 formulaFileInfo = new FileInfo(formulaFile);
-                jsonFile = args[1];
-                jsonFileInfo = new FileInfo(jsonFile);
 
-                if (!formulaFileInfo.Exists || formulaFileInfo.Extension != ".4ml" || 
-                    !jsonFileInfo.Exists || jsonFileInfo.Extension != ".json")
+                if (!formulaFileInfo.Exists || formulaFileInfo.Extension != ".4ml")
                 {
                     Console.WriteLine("Invalid Formula or JSON file and exit...");
                     return;
@@ -73,59 +69,40 @@ namespace ConstraintExecutor
             }
             else {
                 ReadInFile(".4ml", out formulaFile, out formulaFileInfo);
-                ReadInFile(".json", out jsonFile, out jsonFileInfo);
             }
 
-            // Create executor with Formula file loaded.
-            Console.WriteLine("Start loading Formula file from {0}", formulaFileInfo.FullName);
-            executor = new CommandExecutor(formulaFile);
+            // Create executor instance.
+            string debugInfo;
+            executor = new CommandExecutor();
 
+            // Use stopwatch to count running time
             Stopwatch stopwatch = new Stopwatch();
+            
+            stopwatch.Restart();
+            var domainFile = "Language.4ml";
+            executor.DoLoadDomain(domainFile, out debugInfo);
+            stopwatch.Stop();
+            Console.WriteLine(debugInfo);
+            Console.WriteLine("Time for loading language domain is {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            progName = new ProgramName(formulaFile);
-            executor.DoLoadDomain();
+            var constraintFile = "Constraints.4ml";
+            var modelName = "M";
+            List<string> constraintList = executor.DoLoadConstraints(constraintFile, modelName, out debugInfo);
             stopwatch.Stop();
-            Console.WriteLine("Time for loading domain is {0}", stopwatch.Elapsed);
+            Console.WriteLine(debugInfo);
+            Console.WriteLine("Time for loading constraint domain is {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var modelFile1 = "graph_model_1.4ml";
-            executor.DoLoadFile(modelFile1);
-            progName = new ProgramName(modelFile1);
+            var modelFile = "Model.4ml";
+            executor.DoLoadModel(modelFile, out debugInfo);
             stopwatch.Stop();
-            Console.WriteLine("Time for loading model is {0}", stopwatch.Elapsed);
+            Console.WriteLine(debugInfo);
+            Console.WriteLine("Time for loading model file is {0}", stopwatch.Elapsed);
 
-            stopwatch.Restart();
-            var modelFile2 = "graph_model_2.4ml";
-            executor.DoLoadFile(modelFile2);
-            progName = new ProgramName(modelFile2);
-            stopwatch.Stop();
-            Console.WriteLine("Time for loading model is {0}", stopwatch.Elapsed);
-
-            // executor.DoSearchConstraints();
-
-            // ParseJSON(jsonFile, out constraints);
-            // constraints = executor.constraintList;
-
-            List<Task<LiftedBool>> tasks = new List<Task<LiftedBool>>();
-            /**foreach (string constraint in constraints)
-            {
-                // TaskManager.TaskData taskdata;
-                Task<LiftedBool> task = executor.DoConstraintQuery(query1, progName);
-                tasks.Add(task);
-            }**/
-
-            string query = "M2 constraint1";
-            Task<LiftedBool> task = executor.DoConstraintQuery(query, progName);
-            tasks.Add(task);
-
-            Task.WaitAll(tasks.ToArray());
-
-            foreach (Task<LiftedBool> result in tasks)
-            {
-                Console.WriteLine(result.Result);
-            }
-
+            string json = executor.CheckConstraints(constraintList);
+            Console.WriteLine(json);
+            
             Console.ReadLine();
         }
     }
