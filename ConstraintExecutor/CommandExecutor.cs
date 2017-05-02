@@ -23,14 +23,14 @@ namespace ConstraintExecutor
         public List<string> Error { get; set; }
     }
 
-    class CommandExecutor
+    public class CommandExecutor
     {
         private static readonly char[] cmdSplitChars = new char[] { ' ' };
         private string formulaFilename;
         private AST<Program> currentProgram;
         private ProgramName currentProgName;
         private Env env = new Env();
-        public TaskManager taskManager = new TaskManager();
+        private TaskManager taskManager = new TaskManager();
 
         public CommandExecutor()
         {
