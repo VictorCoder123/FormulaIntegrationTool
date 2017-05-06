@@ -1,0 +1,13 @@
+transform Del (id: Integer, GraphIn:: DAGs at "Language.4ml") 
+returns (GraphOut:: DAGs at "Language.4ml")
+{
+   GraphOut.V(x) :- GraphIn.V(x), x != %id.
+   GraphOut.E(x, y) :- GraphIn.E(x, y), x.lbl != %id, y.lbl != %id.
+}
+
+transform Complete (GraphIn:: DAGs at "Language.4ml") 
+returns (GraphOut:: DAGs at "Language.4ml")
+{
+   GraphOut.V(x)    :- GraphIn.V(x).
+   GraphOut.E(x, y) :- GraphIn.path(x, y).
+}

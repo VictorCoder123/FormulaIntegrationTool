@@ -1,0 +1,31 @@
+model LittleCycle of DAGs at "Language.4ml"
+{
+   v1 is V(1).
+   v2 is V(2).
+   E(v1, v2).
+   E(v2, v1).
+}
+
+model Path10 of DAGs at "Language.4ml"
+{
+   v0 is V(0),
+   v1 is V(1),
+   v2 is V(2),
+   v3 is V(3),
+   v4 is V(4),
+   v5 is V(5),
+   v6 is V(6),
+   v7 is V(7),
+   v8 is V(8),
+   v9 is V(9).
+   
+   E(v0, v1),
+   E(v1, v2),
+   E(v2, v3),
+   E(v3, v4),
+   E(v4, v5),
+   E(v5, v6),
+   E(v6, v7),
+   E(v7, v8),
+   E(v8, v9).
+}

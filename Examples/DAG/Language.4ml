@@ -1,0 +1,28 @@
+domain Digraphs
+{
+   V ::= new (lbl: Integer).
+   E ::= new (src: V, dst: V).
+   Thing ::= V + E.
+}
+
+domain DAGs extends Digraphs
+{
+   path ::= (V, V).
+   path(u, w) :- E(u, w); E(u, v), path(v, w).  
+   conforms no path(u, u).
+}
+
+domain Trees extends DAGs
+{
+   conforms no { w | E(u, w), E(v, w), u != v }.
+}
+
+domain IsoDAGs extends Left::DAGs, Right::DAGs
+{
+   Iso ::= bij (left: Left.V => right: Right.V).
+
+   conforms no { e | 
+      e is Left.E(u, w), Iso(u, u'), Iso(w, w'), no Right.E(u', w') }. 
+   conforms no { e | 
+      e is Right.E(u', w'), Iso(u, u'), Iso(w, w'), no Left.E(u, w) }. 
+}
