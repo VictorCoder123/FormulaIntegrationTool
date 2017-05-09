@@ -100,9 +100,18 @@ namespace ConstraintExecutor
             Console.WriteLine(debugInfo);
             Console.WriteLine("Time for loading model file is {0}", stopwatch.Elapsed);
 
+            // Check constraints and print out results.
             string json = executor.CheckConstraints(constraintList);
             Console.WriteLine(json);
-            
+
+            stopwatch.Restart();
+            var transformFile = "Transformation.4ml";
+            executor.DoTransform(transformFile);
+            // executor.DoLoadModel(modelFile, out debugInfo);
+            stopwatch.Stop();
+            // Console.WriteLine(debugInfo);
+            Console.WriteLine("Time for transformation is {0}", stopwatch.Elapsed);
+
             Console.ReadLine();
         }
     }

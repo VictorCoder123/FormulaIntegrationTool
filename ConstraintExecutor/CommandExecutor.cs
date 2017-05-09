@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,6 +63,169 @@ namespace ConstraintExecutor
 
             string json = JsonConvert.SerializeObject(debug, Formatting.Indented);
             return json;
+        }
+
+        public void DoTransform(string transFilename)
+        {
+            ProgramName progName = new ProgramName(transFilename);
+            var str = "";
+            if (File.Exists(progName.Uri.AbsolutePath))
+            {
+                str = File.ReadAllText(progName.Uri.AbsolutePath);
+            }
+            
+            // Console.WriteLine(str);
+            var cmdLineName = new ProgramName("CommandLine.4ml");
+            var parse = Factory.Instance.ParseText(
+                cmdLineName,
+                str
+                // string.Format("transform system Dummy () returns (dummy:: Dummy) {{\n{0}.\n}}", str)
+            );
+            parse.Wait();
+
+            if (!parse.Result.Succeeded)
+            {
+                Console.WriteLine("Could not parse transformation step", SeverityKind.Warning);
+                return;
+            }
+
+            var step = parse.Result.Program.FindAny(
+                new NodePred[]
+                {
+                    NodePredFactory.Instance.Star,
+                    NodePredFactory.Instance.MkPredicate(NodeKind.Step)
+                }) as AST<Step>;
+
+            if (step == null)
+            {
+                Console.WriteLine("Start an apply task. Use: apply transformstep", SeverityKind.Warning);
+                return;
+            }
+
+            AST<Node> stepModule;
+            if (!Utility.TryResolveModuleByName(step.Node.Rhs.Module.Name, out stepModule, env, "step module"))
+            {
+                return;
+            }
+
+            AST<ModApply> rhs = null;
+            if (stepModule.Node.NodeKind == NodeKind.Model)
+            {
+                var model = ((Model)stepModule.Node);
+                if (step.Node.Rhs.Args.Count != 0)
+                {
+                    Console.WriteLine(
+                        string.Format("Model {0} does not take arguments", model.Name),
+                        SeverityKind.Warning);
+                    return;
+                }
+
+                rhs = Factory.Instance.MkModApply(Utility.ToModuleRef(stepModule, stepModule.Node.Span, step.Node.Rhs.Module.Rename), stepModule.Node.Span);
+            }
+            else if (stepModule.Node.NodeKind == NodeKind.Transform ||
+                     stepModule.Node.NodeKind == NodeKind.TSystem)
+            {
+                string name;
+                var inputs = stepModule.Node.NodeKind == NodeKind.Transform
+                                    ? ((Transform)stepModule.Node).Inputs
+                                    : ((TSystem)stepModule.Node).Inputs;
+
+                if (step.Node.Rhs.Args.Count != inputs.Count)
+                {
+                    stepModule.Node.TryGetStringAttribute(AttributeKind.Name, out name);
+                    Console.WriteLine(
+                        string.Format("Transform {0} requires {1} arguments, but got {2}",
+                            name,
+                            inputs.Count,
+                            step.Node.Rhs.Args.Count),
+                        SeverityKind.Warning);
+                    return;
+                }
+
+                int i = 1;
+                AST<Node> argModule;
+                rhs = Factory.Instance.MkModApply(Utility.ToModuleRef(stepModule, stepModule.Node.Span, step.Node.Rhs.Module.Rename), stepModule.Node.Span);
+                using (var itArgs = step.Node.Rhs.Args.GetEnumerator())
+                {
+                    using (var itInputs = inputs.GetEnumerator())
+                    {
+                        while (itArgs.MoveNext() && itInputs.MoveNext())
+                        {
+                            if (itInputs.Current.IsValueParam)
+                            {
+                                rhs = Factory.Instance.AddArg(rhs, Factory.Instance.ToAST(itArgs.Current));
+                            }
+                            else if (itArgs.Current.NodeKind == NodeKind.Id || itArgs.Current.NodeKind == NodeKind.ModRef)
+                            {
+                                name = itArgs.Current.NodeKind == NodeKind.Id ? ((Id)itArgs.Current).Name : ((ModRef)itArgs.Current).Name;
+                                string rename = itArgs.Current.NodeKind == NodeKind.Id ? null : ((ModRef)itArgs.Current).Rename;
+                                if (!Utility.TryResolveModuleByName(name, out argModule, env, "input " + i.ToString()))
+                                {
+                                    return;
+                                }
+                                else if (argModule.Node.NodeKind != NodeKind.Model)
+                                {
+                                    argModule.Node.TryGetStringAttribute(AttributeKind.Name, out name);
+                                    Console.WriteLine(string.Format("Module {0} is not valid for this operation", name), SeverityKind.Warning);
+                                    return;
+                                }
+
+                                rhs = Factory.Instance.AddArg(rhs, Utility.ToModuleRef(argModule, stepModule.Node.Span, rename));
+                            }
+                            else
+                            {
+                                Console.WriteLine(string.Format("Input {0} should be a model.", i), SeverityKind.Warning);
+                                return;
+                            }
+
+                            ++i;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                string name;
+                stepModule.Node.TryGetStringAttribute(AttributeKind.Name, out name);
+                Console.WriteLine(string.Format("Module {0} is not valid for this operation", name), SeverityKind.Warning);
+                return;
+            }
+
+            var resolvedStep = Factory.Instance.MkStep(rhs, rhs.Node.Span);
+            foreach (var id in step.Node.Lhs)
+            {
+                resolvedStep = Factory.Instance.AddLhs(resolvedStep, Factory.Instance.MkId(id.Name, id.Span));
+            }
+
+            List<Flag> flags;
+            ExecuterStatistics stats;
+            System.Threading.Tasks.Task<ApplyResult> task;
+            var applyCancel = new CancellationTokenSource();
+            var result = env.Apply(
+                resolvedStep,
+                true,
+                true,
+                out flags,
+                out task,
+                out stats,
+                applyCancel.Token
+            );
+
+            if (!result)
+            {
+                Console.WriteLine("Could not start operation; environment is busy", SeverityKind.Warning);
+                return;
+            }
+
+            if (task != null)
+            {
+                var id = taskManager.StartTask(task, stats, applyCancel);
+                Console.WriteLine(string.Format("Started apply task with Id {0}.", id), SeverityKind.Info);
+            }
+            else
+            {
+                Console.WriteLine("Failed to start apply task.", SeverityKind.Warning);
+            }
         }
 
         // Load a Formula file into env.
