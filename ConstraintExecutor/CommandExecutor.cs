@@ -30,12 +30,14 @@ namespace ConstraintExecutor
         private string formulaFilename;
         private AST<Program> currentProgram;
         private ProgramName currentProgName;
-        private Env env = new Env();
-        private TaskManager taskManager = new TaskManager();
+        private Env env;
+        private TaskManager taskManager;
 
         public CommandExecutor()
         {
             // Set flag to run task asynchronously.
+            env = new Env();
+            taskManager = new TaskManager();
             taskManager.IsWaitOn = false;
         }
 
@@ -65,21 +67,17 @@ namespace ConstraintExecutor
             return json;
         }
 
-        public void DoTransform(string transFilename)
+        public void DoApply(string transformStepName, List<string> parameters, out string debugInfo)
         {
-            ProgramName progName = new ProgramName(transFilename);
-            var str = "";
-            if (File.Exists(progName.Uri.AbsolutePath))
-            {
-                str = File.ReadAllText(progName.Uri.AbsolutePath);
-            }
-            
-            // Console.WriteLine(str);
+            debugInfo = null;
+
+            string paramString = string.Join(",", parameters.ToArray());
+            string s = string.Format("R = {0}({1})", transformStepName, paramString);
+            Console.WriteLine(s);
             var cmdLineName = new ProgramName("CommandLine.4ml");
             var parse = Factory.Instance.ParseText(
                 cmdLineName,
-                str
-                // string.Format("transform system Dummy () returns (dummy:: Dummy) {{\n{0}.\n}}", str)
+                string.Format("transform system Dummy () returns (dummy:: Dummy) {{\n{0}.\n}}", s)
             );
             parse.Wait();
 
@@ -221,6 +219,7 @@ namespace ConstraintExecutor
             {
                 var id = taskManager.StartTask(task, stats, applyCancel);
                 Console.WriteLine(string.Format("Started apply task with Id {0}.", id), SeverityKind.Info);
+                task.Wait();
             }
             else
             {
@@ -283,6 +282,13 @@ namespace ConstraintExecutor
             DoLoadFile(modelFilename, out program, out debugInfo);
             currentProgram = program;
             currentProgName = new ProgramName(modelFilename);
+        }
+
+        // Load transformation file into env.
+        public void DoLoadTransformation(string transformFilename, out string debugInfo)
+        {
+            AST<Program> program;
+            DoLoadFile(transformFilename, out program, out debugInfo);        
         }
 
         // Return a list of synthesized Query string inside program parameter.

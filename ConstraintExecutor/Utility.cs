@@ -19,7 +19,7 @@ namespace ConstraintExecutor
     {
         private static readonly char[] cmdSplitChars = new char[] { ' ' };
         private static bool exeOptions = false;
-        private static CancellationTokenSource canceler = null;
+        private static CancellationTokenSource canceler = new CancellationTokenSource();
 
         private static int CompareModules(AST<Node> mod1, AST<Node> mod2)
         {
@@ -44,33 +44,39 @@ namespace ConstraintExecutor
             var sorted = new Set<AST<Node>>((x, y) => CompareModules(x, y));
             var root = env.FileRoot;
 
+
+            NodePred[] queries = new NodePred[]
+            {
+                NodePredFactory.Instance.Star,
+                NodePredFactory.Instance.Module,
+            };
+
             root.FindAll(
-                new NodePred[]
+            queries,
+            (path, node) =>
+            {
+                var progName = ((Program)((LinkedList<ChildInfo>)path).Last.Previous.Value.Node).Name;
+                string modName;
+                node.TryGetStringAttribute(AttributeKind.Name, out modName);
+
+                if (!string.IsNullOrEmpty(partialProgramName) &&
+                    !progName.ToString().Contains(partialProgramName))
                 {
-                    NodePredFactory.Instance.Star,
-                    NodePredFactory.Instance.Module,
-                },
-                (path, node) =>
+                    return;
+                }
+
+                if (!string.IsNullOrEmpty(partialModuleName) &&
+                    !modName.Contains(partialModuleName))
                 {
-                    var progName = ((Program)((LinkedList<ChildInfo>)path).Last.Previous.Value.Node).Name;
-                    string modName;
-                    node.TryGetStringAttribute(AttributeKind.Name, out modName);
+                    return;
+                }
 
-                    if (!string.IsNullOrEmpty(partialProgramName) &&
-                        !progName.ToString().Contains(partialProgramName))
-                    {
-                        return;
-                    }
-
-                    if (!string.IsNullOrEmpty(partialModuleName) &&
-                        !modName.Contains(partialModuleName))
-                    {
-                        return;
-                    }
-
-                    sorted.Add(Factory.Instance.FromAbsPositions(root.Node, path));
-                },
-                canceler.Token);
+                sorted.Add(Factory.Instance.FromAbsPositions(root.Node, path));
+            },
+            canceler.Token);
+          
+            
+           
 
             root = env.EnvRoot;
             root.FindAll(
@@ -148,25 +154,25 @@ namespace ConstraintExecutor
             bool result;
             if (string.IsNullOrWhiteSpace(partialModAndProgName))
             {
-                result = TryResolveModuleByName(null, null, out module, prompt, env);
+                result = TryResolveModuleByName(null, null, out module, env, prompt);
             }
             else
             {
                 var parts = partialModAndProgName.Split(cmdSplitChars, 2, StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length == 1)
                 {
-                    result = TryResolveModuleByName(parts[0], null, out module, prompt, env);
+                    result = TryResolveModuleByName(parts[0], null, out module, env, prompt);
                 }
                 else
                 {
-                    result = TryResolveModuleByName(parts[0], parts[1], out module, prompt, env);
+                    result = TryResolveModuleByName(parts[0], parts[1], out module, env, prompt);
                 }
             }
 
             return result;
         }
 
-        public static bool TryResolveModuleByName(string partialModName, string partialProgName, out AST<Node> module, string prompt, Env env)
+        public static bool TryResolveModuleByName(string partialModName, string partialProgName, out AST<Node> module, Env env, string prompt)
         {
             var candidates = GetModulesByName(partialModName, partialProgName, env);
             if (candidates.Length == 0)

@@ -77,7 +77,7 @@ namespace ConstraintExecutor
 
             // Use stopwatch to count running time
             Stopwatch stopwatch = new Stopwatch();
-            
+
             stopwatch.Restart();
             var domainFile = "Language.4ml";
             executor.DoLoadDomain(domainFile, out debugInfo);
@@ -100,17 +100,27 @@ namespace ConstraintExecutor
             Console.WriteLine(debugInfo);
             Console.WriteLine("Time for loading model file is {0}", stopwatch.Elapsed);
 
+            stopwatch.Restart();
+            var transformFile = "Transformation.4ml";
+            executor.DoLoadTransformation(transformFile, out debugInfo);
+            stopwatch.Stop();
+            Console.WriteLine(debugInfo);
+            Console.WriteLine("Time for loading transformation file is {0}", stopwatch.Elapsed);
+
             // Check constraints and print out results.
             string json = executor.CheckConstraints(constraintList);
             Console.WriteLine(json);
 
+            // executor.DoLoadModel("All.4ml", out debugInfo);
+
             stopwatch.Restart();
-            var transformFile = "Transformation.4ml";
-            executor.DoTransform(transformFile);
-            // executor.DoLoadModel(modelFile, out debugInfo);
+            string stepName = "PrettyCopy";
+            List<string> parameters = new List<string>();
+            parameters.Add("LittleCycle");
+            executor.DoApply(stepName, parameters, out debugInfo);
             stopwatch.Stop();
-            // Console.WriteLine(debugInfo);
-            Console.WriteLine("Time for transformation is {0}", stopwatch.Elapsed);
+            Console.WriteLine(debugInfo);
+            Console.WriteLine("Time for applying transformation file is {0}", stopwatch.Elapsed);
 
             Console.ReadLine();
         }
